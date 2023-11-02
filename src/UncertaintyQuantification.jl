@@ -9,6 +9,7 @@ using DynamicPolynomials
 using FastGaussQuadrature
 using FiniteDifferences
 using Formatting
+using GaussianProcesses
 using KernelDensity
 using LinearAlgebra
 using Mustache
@@ -18,11 +19,13 @@ using Reexport
 using StatsBase
 
 @reexport using Distributions
+@reexport using GaussianProcesses
 
 import Base: rand, names, copy, run, length
 import Distributions: cdf, quantile, pdf, logpdf, minimum, maximum, insupport
 import Statistics: mean, var
 import Distributions: logpdf, pdf, cdf, quantile, minimum, maximum, insupport, mean, var
+import GaussianProcesses: Kernel, Mean, Scalar, GP, GPBase
 
 abstract type UQType end
 
@@ -60,6 +63,7 @@ export FORM
 export FractionalFactorial
 export FullFactorial
 export GaussianCopula
+export GaussianProcess
 export GaussQuadrature
 export HaltonSampling
 export HermiteBasis
@@ -128,6 +132,7 @@ include("models/responsesurface.jl")
 
 include("models/pce/pcebases.jl")
 include("models/pce/polynomialchaosexpansion.jl")
+include("models/gp/gaussianprocess.jl")
 
 include("sensitivity/gradient.jl")
 
