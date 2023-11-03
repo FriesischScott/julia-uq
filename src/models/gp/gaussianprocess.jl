@@ -1,8 +1,26 @@
 struct GaussianProcess <: UQModel
     gpBase::GPBase
-    inputs::Vector{<:UQInput}
+    inputs::Union{Vector{<:UQInput},Vector{Symbol}}
     output::Symbol
     n_sim::Int
+end
+
+function gaussianprocess(
+    df::DataFrame,
+    inputs::Vector{Symbol},
+    output::Symbol,
+    kernel::Kernel,
+    mean::Mean=MeanZero(),
+)
+    X = Matrix(df[:, inputs])'
+    y = df[:, output]
+
+    gp = GaussianProcesses.GP(X, y, mean, kernel)
+    optimize!(gp)
+
+    GP = GaussianProcess(gp, inputs, output, size(X, 2))
+
+    return GP, df
 end
 
 function gaussianprocess(
@@ -14,6 +32,7 @@ function gaussianprocess(
 )
     random_inputs = filter(i -> isa(i, RandomUQInput), inputs)
     random_names = names(random_inputs)
+
     X = Matrix(df[:, random_names])'
     y = df[:, output]
 
@@ -23,6 +42,14 @@ function gaussianprocess(
     GP = GaussianProcess(gp, inputs, output, size(X, 2))
 
     return GP, df
+end
+
+### Convenience Functions
+
+function gaussianprocess(
+    df::DataFrame, inputs::Symbol, output::Symbol, kernel::Kernel, mean::Mean=MeanZero()
+)
+    return gaussianprocess(df, [inputs], output, kernel, mean)
 end
 
 function gaussianprocess(
