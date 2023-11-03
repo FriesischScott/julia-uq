@@ -16,13 +16,21 @@
     m = MeanZero()
 
     sim = MonteCarlo(10)
+    df = sample(x, sim)
+    evaluate!(model, df)
 
-    gp = gaussianprocess(x, model, :y, sim, kernel, m)
+    gp, samples = gaussianprocess(df, x, :y, kernel, m)
 
     @test gp.inputs == x
-    @test gp.model == model
     @test gp.output == :y
-    @test gp.sim == sim
+    @test gp.n_sim == sim.n
+    @test isa(gp.gpBase, GPE)
+
+    gp, samples = gaussianprocess(x, model, :y, sim, kernel, m)
+
+    @test gp.inputs == x
+    @test gp.output == :y
+    @test gp.n_sim == sim.n
     @test isa(gp.gpBase, GPE)
 
     @testset "Convenience Functions" begin
@@ -43,24 +51,23 @@
         kernel_2 = SE([0.0, 0.0], 0.0)
         m = MeanZero()
 
-        gp_11 = gaussianprocess(x1, model_a, :ya, sim, kernel, m)
+        gp_11, samples_11 = gaussianprocess(x1, model_a, :ya, sim, kernel, m)
 
-        gp_12 = gaussianprocess(x1, [model_a, model_b], :yb, sim, kernel, m)
+        gp_12, samples_12 = gaussianprocess(x1, [model_a, model_b], :yb, sim, kernel, m)
 
-        gp_21 = gaussianprocess([x1, x2], model_a, :ya, sim, kernel, m)
+        gp_21, samples_22 = gaussianprocess([x1, x2], model_a, :ya, sim, kernel, m)
 
         @test isa(gp_11, GaussianProcess)
         @test isa(gp_12, GaussianProcess)
         @test isa(gp_21, GaussianProcess)
     end
 
-    # @testset "evaluate" begin
-    #     gq = GaussQuadrature()
-    #     pce, samples = polynomialchaos(x, model, Ψ, :y, gq)
+    @testset "evaluate" begin
+        gp, samples = gaussianprocess(x, model, :y, sim, kernel)
 
-    #     data = copy(samples)
-    #     evaluate!(pce, data)
+        data = copy(samples)
+        evaluate!(gp, data)
 
-    #     @test sum((samples.y .- data.y) .^ 2) ≈ 0.0 atol = 0.01
-    # end
+        @test sum((samples.y .- data.y) .^ 2) ≈ 0.0 atol = 0.01
+    end
 end
