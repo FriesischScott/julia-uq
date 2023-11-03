@@ -97,6 +97,7 @@ export dimensions
 export doe_samples
 export evaluate
 export evaluate!
+export gaussianprocess
 export gradient
 export gradient_in_standard_normal_space
 export mean
