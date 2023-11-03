@@ -7,9 +7,9 @@ struct GaussianProcess <: UQModel
 end
 
 function gaussianprocess(
-    output::Symbol,
     inputs::Vector{<:UQInput},
     model::Vector{<:UQModel},
+    output::Symbol,
     sim::AbstractMonteCarlo,
     kernel::Kernel,
     mean::Mean=ZeroMean(),
@@ -25,6 +25,39 @@ function gaussianprocess(
     optimize!(gp)
 
     return GaussianProcess(gp, inputs, output, model, sim)
+end
+
+function gaussianprocess(
+    inputs::UQInput,
+    model::Vector{<:UQModel},
+    output::Symbol,
+    sim::AbstractMonteCarlo,
+    kernel::Kernel,
+    mean::Mean=ZeroMean(),
+)
+    return gaussianprocess([inputs], model, output, sim, kernel, mean)
+end
+
+function gaussianprocess(
+    inputs::Vector{<:UQInput},
+    model::UQModel,
+    output::Symbol,
+    sim::AbstractMonteCarlo,
+    kernel::Kernel,
+    mean::Mean=ZeroMean(),
+)
+    return gaussianprocess(inputs, [model], output, sim, kernel, mean)
+end
+
+function gaussianprocess(
+    inputs::UQInput,
+    model::UQModel,
+    output::Symbol,
+    sim::AbstractMonteCarlo,
+    kernel::Kernel,
+    mean::Mean=ZeroMean(),
+)
+    return gaussianprocess([inputs], [model], output, sim, kernel, mean)
 end
 
 function evaluate!(gp::GaussianProcess, df::DataFrame)
