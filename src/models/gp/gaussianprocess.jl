@@ -2,8 +2,27 @@ struct GaussianProcess <: UQModel
     gpBase::GPBase
     inputs::Vector{<:UQInput}
     output::Symbol
-    model::Vector{<:UQModel}
-    sim::AbstractMonteCarlo
+    n_sim::Int
+end
+
+function gaussianprocess(
+    df::DataFrame,
+    inputs::Vector{<:UQInput},
+    output::Symbol,
+    kernel::Kernel,
+    mean::Mean=MeanZero(),
+)
+    random_inputs = filter(i -> isa(i, RandomUQInput), inputs)
+    random_names = names(random_inputs)
+    X = Matrix(df[:, random_names])'
+    y = df[:, output]
+
+    gp = GaussianProcesses.GP(X, y, mean, kernel)
+    optimize!(gp)
+
+    GP = GaussianProcess(gp, inputs, output, size(X, 2))
+
+    return GP, df
 end
 
 function gaussianprocess(
@@ -12,19 +31,12 @@ function gaussianprocess(
     output::Symbol,
     sim::AbstractMonteCarlo,
     kernel::Kernel,
-    mean::Mean=ZeroMean(),
+    mean::Mean=MeanZero(),
 )
-    samples = sample(inputs, sim)
-    evaluate!(model, samples)
+    df = sample(inputs, sim)
+    evaluate!(model, df)
 
-    random_inputs = filter(i -> isa(i, RandomUQInput), inputs)
-    random_names = names(random_inputs)
-    X = Matrix(samples[:, random_names])'
-    y = samples[:, output]
-    gp = GP(X, y, mean, kernel)
-    optimize!(gp)
-
-    return GaussianProcess(gp, inputs, output, model, sim)
+    return gaussianprocess(df, inputs, output, kernel, mean)
 end
 
 function gaussianprocess(
@@ -33,7 +45,7 @@ function gaussianprocess(
     output::Symbol,
     sim::AbstractMonteCarlo,
     kernel::Kernel,
-    mean::Mean=ZeroMean(),
+    mean::Mean=MeanZero(),
 )
     return gaussianprocess([inputs], model, output, sim, kernel, mean)
 end
@@ -44,7 +56,7 @@ function gaussianprocess(
     output::Symbol,
     sim::AbstractMonteCarlo,
     kernel::Kernel,
-    mean::Mean=ZeroMean(),
+    mean::Mean=MeanZero(),
 )
     return gaussianprocess(inputs, [model], output, sim, kernel, mean)
 end
@@ -55,7 +67,7 @@ function gaussianprocess(
     output::Symbol,
     sim::AbstractMonteCarlo,
     kernel::Kernel,
-    mean::Mean=ZeroMean(),
+    mean::Mean=MeanZero(),
 )
     return gaussianprocess([inputs], [model], output, sim, kernel, mean)
 end
