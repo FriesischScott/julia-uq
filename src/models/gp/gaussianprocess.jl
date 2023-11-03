@@ -1,5 +1,5 @@
 struct GaussianProcess <: UQModel
-    gp::GPBase
+    gpBase::GPBase
     inputs::Vector{<:UQInput}
     output::Symbol
     model::Vector{<:UQModel}
@@ -63,6 +63,6 @@ end
 function evaluate!(gp::GaussianProcess, df::DataFrame)
     data = df[:, names(gp.inputs)]
     X = Matrix(data)'
-    df[!, gp.output] = rand(gp.gp, X)
+    df[!, gp.output] = rand(gp.gpBase, X)
     return nothing
 end
