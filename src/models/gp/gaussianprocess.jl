@@ -100,7 +100,12 @@ function gaussianprocess(
 end
 
 function evaluate!(gp::GaussianProcess, df::DataFrame)
-    data = df[:, names(gp.inputs)]
+    if isa(gp.inputs, Vector{Symbol})
+        random_names = gp.inputs
+    else
+        random_names = names(gp.inputs)
+    end
+    data = df[:, random_names]
     X = Matrix(data)'
     df[!, gp.output] = rand(gp.gpBase, X)
     return nothing

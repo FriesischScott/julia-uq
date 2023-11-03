@@ -77,5 +77,14 @@
         evaluate!(gp, data)
 
         @test sum((samples.y .- data.y) .^ 2) ≈ 0.0 atol = 0.01
+
+        df = sample(x, sim)
+        evaluate!(model, df)
+
+        gp, samples = gaussianprocess(df, names(x), :y, kernel, m)
+
+        data = copy(samples)
+        evaluate!(gp, data)
+        @test sum((samples.y .- data.y) .^ 2) ≈ 0.0 atol = 0.01
     end
 end
