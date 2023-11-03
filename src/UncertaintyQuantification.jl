@@ -26,6 +26,7 @@ import Distributions: cdf, quantile, pdf, logpdf, minimum, maximum, insupport
 import Statistics: mean, var
 import Distributions: logpdf, pdf, cdf, quantile, minimum, maximum, insupport, mean, var
 import GaussianProcesses: Kernel, Mean, Scalar, GP, GPBase
+import StatsBase: predict
 
 abstract type UQType end
 
