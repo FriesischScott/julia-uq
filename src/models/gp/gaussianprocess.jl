@@ -1,8 +1,10 @@
+include("normalization.jl")
 struct GaussianProcess <: UQModel
     gpBase::GPBase
     inputs::Union{Vector{<:UQInput},Vector{Symbol}}
     output::Symbol
     n_sim::Int
+    std::InputStandardizationGP
 end
 
 function gaussianprocess(
@@ -15,12 +17,16 @@ function gaussianprocess(
     X = Matrix(df[:, inputs])'
     y = df[:, output]
 
-    gp = GaussianProcesses.GP(X, y, mean, kernel)
+    X_std = [to_standard(x, minimum(X), maximum(X)) for x in X]
+
+    gp = GP(X_std, y, mean, kernel)
     optimize!(gp)
 
-    GP = GaussianProcess(gp, inputs, output, size(X, 2))
+    gp = GaussianProcess(
+        gp, inputs, output, size(X, 2), InputStandardizationGP(minimum(X), maximum(X))
+    )
 
-    return GP, df
+    return gp, df
 end
 
 function gaussianprocess(
@@ -36,12 +42,15 @@ function gaussianprocess(
     X = Matrix(df[:, random_names])'
     y = df[:, output]
 
-    gp = GaussianProcesses.GP(X, y, mean, kernel)
+    X_std = [to_standard(x, minimum(X), maximum(X)) for x in X]
+
+    gp = GaussianProcesses.GP(X_std, y, mean, kernel)
     optimize!(gp)
 
-    GP = GaussianProcess(gp, inputs, output, size(X, 2))
-
-    return GP, df
+    gp = GaussianProcess(
+        gp, inputs, output, size(X, 2), InputStandardizationGP(minimum(X), maximum(X))
+    )
+    return gp, df
 end
 
 ### Convenience Functions
@@ -107,6 +116,11 @@ function evaluate!(gp::GaussianProcess, df::DataFrame)
     end
     data = df[:, random_names]
     X = Matrix(data)'
-    df[!, gp.output] = rand(gp.gpBase, X)
+
+    X_std = [to_standard(x, minimum(X), maximum(X)) for x in X]
+
+    df[!, gp.output] = rand(gp.gpBase, X_std)
     return nothing
 end
+
+include("plot.jl")

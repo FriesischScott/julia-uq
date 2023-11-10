@@ -15,6 +15,7 @@ using LinearAlgebra
 using Mustache
 using QuasiMonteCarlo
 using Random
+using RecipesBase
 using Reexport
 using StatsBase
 
@@ -25,8 +26,8 @@ import Base: rand, names, copy, run, length
 import Distributions: cdf, quantile, pdf, logpdf, minimum, maximum, insupport
 import Statistics: mean, var
 import Distributions: logpdf, pdf, cdf, quantile, minimum, maximum, insupport, mean, var
-import GaussianProcesses: Kernel, Mean, Scalar, GP, GPBase
-import StatsBase: predict
+import GaussianProcesses: Kernel, Mean, Scalar, GP, GPBase, invΦ
+import StatsBase: fit, predict, transform
 
 abstract type UQType end
 
