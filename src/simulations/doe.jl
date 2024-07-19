@@ -61,7 +61,7 @@ function full_factorial_matrix(levels::Vector{<:Integer})
     return mapreduce(t -> [t...]', vcat, Iterators.product(ranges...))
 end
 
-function bounds(r::RandomVariable, σ::Int)
+function range(r::RandomVariable, σ::Int)
     lb = minimum(r)
     lb = isinf(lb) ? -std(r.dist) * σ : lb
 
@@ -71,8 +71,8 @@ function bounds(r::RandomVariable, σ::Int)
     return [lb ub]
 end
 
-function bounds(jd::JointDistribution, σ::Int)
-    return reduce(vcat, bounds.(jd.marginals, σ))
+function range(jd::JointDistribution, σ::Int)
+    return reduce(vcat, range.(jd.marginals, σ))
 end
 
 function sample(inputs::Array{<:UQInput}, design::AbstractDesignOfExperiments)
@@ -83,7 +83,7 @@ function sample(inputs::Array{<:UQInput}, design::AbstractDesignOfExperiments)
     n_rv = mapreduce(dimensions, +, random_inputs)
 
     samples = doe_samples(design, n_rv)
-    b = reduce(vcat, bounds.(random_inputs, design.σ))
+    b = reduce(vcat, range.(random_inputs, design.σ))
 
     for i in 1:n_rv
         samples[:, i] = samples[:, i] .* (b[i, 2] - b[i, 1]) .+ b[i, 1]

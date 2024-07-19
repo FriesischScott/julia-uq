@@ -63,7 +63,7 @@ function probability_of_failure(
 end
 
 function bounds(inputs::AbstractVector{<:UQInput})
-    imprecise_inputs = filter(x -> isa(x, ImpreciseUQInput), inputs)
+    imprecise_inputs = filter(x -> any(isa.([marginals(x)], ImpreciseUQInput)), inputs)
 
     b = bounds.(imprecise_inputs)
     lb = vcat(getindex.(b, 1)...)
