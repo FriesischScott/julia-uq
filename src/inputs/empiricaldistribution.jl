@@ -1,30 +1,37 @@
+"""
+    EmpiricalDistribution(x::Vector{<:Real})
+
+    Creates an empirical distribution from the data given in `x` using kernel density estimation.
+    The kernel used is Gaussian and the bandwith is obtained through the Sheather-Jones method.
+    The support is inferred from the kde using numerical root finding.
+"""
 struct EmpiricalDistribution <: ContinuousUnivariateDistribution
     data::Vector{<:Real}
-    cdf::ECDF
-    quantile::Spline1D
-    pdf::InterpKDE
+    lb::Real
+    ub::Real
+    h::Real
 
-    function EmpiricalDistribution(x::Vector{<:Real}, kernel=Normal)
-        cdf = ecdf(x)
+    function EmpiricalDistribution(x::Vector{<:Real})
+        h = sheather_jones_bandwidth(x)
 
-        f = cdf.(cdf.sorted_values)
-        quantile = Spline1D(f, cdf.sorted_values)
+        lb = find_zero(u -> kde(h, u, x), minimum(x), Order2())
 
-        pdf = InterpKDE(kde_lscv(x; kernel=kernel))
-        return new(x, cdf, quantile, pdf)
+        ub = find_zero(u -> kde(h, u, x), maximum(x), Order2())
+
+        return new(x, lb, ub, h)
     end
 end
 
 function cdf(d::EmpiricalDistribution, x::Real)
-    return clamp(d.cdf(x), 0, 1)
+    return quadgk(x -> pdf(d, x), d.lb, x)[1]
 end
 
-function quantile(d::EmpiricalDistribution, x::Real)
-    return d.quantile(x)
+function quantile(d::EmpiricalDistribution, u::Real)
+    return find_zero(x -> cdf(d, x) - u, (d.lb, d.ub))
 end
 
 function pdf(d::EmpiricalDistribution, x::Real)
-    return insupport(d, x) ? abs(pdf(d.pdf, x)) : zero(x)
+    return insupport(d, x) ? kde(d.h, x, d.data) : zero(x)
 end
 
 function logpdf(d::EmpiricalDistribution, x::Real)
@@ -35,8 +42,8 @@ function rand(rng::AbstractRNG, d::EmpiricalDistribution)
     return quantile(d, rand(rng))
 end
 
-insupport(d::EmpiricalDistribution, x::Real) = minimum(d) <= x <= maximum(d)
-minimum(d::EmpiricalDistribution) = minimum(d.data)
-maximum(d::EmpiricalDistribution) = maximum(d.data)
+insupport(d::EmpiricalDistribution, x::Real) = d.lb <= x <= d.ub
+minimum(d::EmpiricalDistribution) = d.lb
+maximum(d::EmpiricalDistribution) = d.ub
 mean(d::EmpiricalDistribution) = mean(d.data)
 var(d::EmpiricalDistribution) = var(d.data)
